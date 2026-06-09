@@ -106,6 +106,20 @@ export default function PlayerHeroSection() {
                         <span className="text-[#BFFF00] font-bold">Tracke. Progresse. Domine.</span>
                     </motion.p>
 
+                    {/* Offside image */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: isVisible ? 1 : 0, scale: isVisible ? 1 : 0.95 }}
+                        transition={{ duration: 0.8, delay: 0.5 }}
+                        className="relative max-w-2xl mx-auto px-4"
+                    >
+                        <img
+                            src="/images/offside-foot-indoor.avif"
+                            alt="Offside Foot Indoor"
+                            className="w-full h-auto rounded-xl shadow-2xl shadow-black/30 border border-white/10"
+                        />
+                    </motion.div>
+
                     {/* CTA Buttons */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
