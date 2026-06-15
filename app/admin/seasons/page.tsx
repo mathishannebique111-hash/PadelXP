@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Trophy, Clock, Plus, ChevronDown, ChevronUp, Gift, Calendar,
   X, Check, AlertTriangle, History, Crown, StopCircle,
-  Image as ImageIcon, Building2,
+  Image as ImageIcon, Building2, QrCode,
 } from "lucide-react";
 import PageTitle from "@/components/PageTitle";
 
@@ -121,6 +121,9 @@ export default function SeasonsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadingRank, setUploadingRank] = useState<number | null>(null);
 
+  // Compteur de scans du QR code de téléchargement : null = chargement, -1 = indisponible.
+  const [qrScanCount, setQrScanCount] = useState<number | null>(null);
+
   const today = useMemo(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -151,6 +154,15 @@ export default function SeasonsPage() {
   }, []);
 
   useEffect(() => { loadSeasons(); }, [loadSeasons]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/admin/qr-scans", { cache: "no-store" })
+      .then(res => (res.ok ? res.json() : Promise.reject()))
+      .then(data => { if (!cancelled) setQrScanCount(typeof data.count === "number" ? data.count : -1); })
+      .catch(() => { if (!cancelled) setQrScanCount(-1); });
+    return () => { cancelled = true; };
+  }, []);
 
   const activeSeason = seasons.find(s => s.status === "active");
   const upcomingSeasons = seasons.filter(s => s.status === "upcoming");
@@ -683,6 +695,32 @@ export default function SeasonsPage() {
           )}
         </>
       )}
+
+      {/* ====== Compteur de scans du QR code de téléchargement ====== */}
+      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-400/20 flex items-center justify-center flex-shrink-0">
+            <QrCode className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white">Scans du QR code</h2>
+            <p className="text-xs text-white/50">
+              Nombre total de scans de l&apos;affiche (lien padelxp.eu/download) depuis sa création.
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex items-baseline gap-2">
+          <span className="text-4xl font-black text-white tabular-nums">
+            {qrScanCount === null ? "…" : qrScanCount === -1 ? "—" : qrScanCount.toLocaleString("fr-FR")}
+          </span>
+          <span className="text-sm text-white/40">scans</span>
+        </div>
+        {qrScanCount === -1 && (
+          <p className="mt-2 text-[11px] text-amber-300/80">
+            Compteur indisponible (la table de suivi n&apos;est pas encore active).
+          </p>
+        )}
+      </section>
     </div>
   );
 }

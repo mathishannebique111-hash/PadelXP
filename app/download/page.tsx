@@ -1,43 +1,38 @@
-"use client";
+import { headers } from "next/headers";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
+import DownloadClient from "./DownloadClient";
 
-import { useEffect } from "react";
+// Recompute on every request so each visit (= 1 QR scan) is counted.
+export const dynamic = "force-dynamic";
 
-const APP_STORE_URL = "https://apps.apple.com/app/id6757870307";
-const PLAY_STORE_URL =
-  "https://play.google.com/store/apps/details?id=eu.padelxp.player";
+const supabaseAdmin = createAdminClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
-export default function DownloadPage() {
-  useEffect(() => {
-    const ua = navigator.userAgent || "";
-    if (/android/i.test(ua)) {
-      window.location.href = PLAY_STORE_URL;
-    } else if (/iphone|ipad|ipod|macintosh/i.test(ua) && "ontouchend" in document) {
-      window.location.href = APP_STORE_URL;
-    }
-  }, []);
+// Filtre les bots / aperçus de lien (WhatsApp, Telegram, crawlers...) pour que
+// le compteur reflète des scans humains réels et pas des fetchs automatiques.
+const BOT_UA =
+  /bot|crawler|spider|crawling|preview|facebookexternalhit|slurp|bingpreview|whatsapp|telegram|discord|headless|monitor|uptime|curl|wget|python-requests|axios/i;
 
-  return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-      <div className="max-w-md text-center space-y-6">
-        <h1 className="text-4xl font-bold">PadelXP</h1>
-        <p className="text-gray-400 text-lg">
-          Télécharge l&apos;application pour rejoindre le classement et enregistrer tes matchs.
-        </p>
-        <div className="flex flex-col gap-4 pt-4">
-          <a
-            href={APP_STORE_URL}
-            className="bg-white text-black px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition"
-          >
-            Télécharger sur iPhone
-          </a>
-          <a
-            href={PLAY_STORE_URL}
-            className="bg-white text-black px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition"
-          >
-            Télécharger sur Android
-          </a>
-        </div>
-      </div>
-    </div>
-  );
+async function recordScan() {
+  try {
+    const h = await headers();
+    const ua = h.get("user-agent") || "";
+    if (!ua || BOT_UA.test(ua)) return;
+
+    await supabaseAdmin.from("qr_scans").insert({
+      source: "download",
+      user_agent: ua.slice(0, 500),
+      referer: h.get("referer"),
+    });
+  } catch {
+    // Le suivi ne doit jamais casser la page de téléchargement.
+  }
+}
+
+export default async function DownloadPage() {
+  await recordScan();
+  return <DownloadClient />;
 }
