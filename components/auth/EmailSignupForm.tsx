@@ -129,10 +129,10 @@ export default function EmailSignupForm({
       }
 
 
-      // Si un code de parrainage est fourni, vérifier qu'il est valide
+      // Si un code promo est fourni, vérifier qu'il est valide
       if (referralCode.trim().length > 0) {
         if (!referralCodeStatus || !referralCodeStatus.valid) {
-          setError(referralCodeStatus?.error || "Code de parrainage invalide");
+          setError(referralCodeStatus?.error || "Code promo invalide");
           setLoading(false);
           return;
         }
@@ -403,11 +403,11 @@ export default function EmailSignupForm({
         required={false}
       />
 
-      {/* Champ code de parrainage (optionnel) */}
+      {/* Champ code promo (optionnel) */}
       <div>
         <input
           type="text"
-          placeholder="Code de parrainage (optionnel)"
+          placeholder="Code promo (optionnel)"
           className={`w-full rounded-lg bg-white/5 border px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 ${referralCodeStatus?.valid
             ? "border-green-500/50 focus:ring-green-500"
             : referralCodeStatus?.valid === false
@@ -421,9 +421,9 @@ export default function EmailSignupForm({
         {referralCodeValidating && (
           <p className="mt-1 text-xs text-white/60">Vérification du code...</p>
         )}
-        {referralCodeStatus?.valid && referralCodeStatus.referrerName && (
+        {referralCodeStatus?.valid && (
           <p className="mt-1 text-xs text-green-400">
-            ✓ Code valide ! Parrain : {referralCodeStatus.referrerName}
+            ✓ 1 mois de Premium offert 🎉
           </p>
         )}
         {referralCodeStatus?.valid === false && referralCodeStatus.error && (
@@ -431,7 +431,7 @@ export default function EmailSignupForm({
         )}
         {referralCode.trim().length > 0 && !referralCodeStatus && !referralCodeValidating && (
           <p className="mt-1 text-xs text-white/60">
-            Vous recevrez 15 jours de Premium offerts si le code est valide
+            Entrez le code promo pour 1 mois de Premium offert
           </p>
         )}
       </div>

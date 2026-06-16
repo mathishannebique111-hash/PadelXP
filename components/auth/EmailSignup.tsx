@@ -109,7 +109,7 @@ export default function EmailSignup() {
         }
 
         if (referralCode.trim().length > 0 && referralCodeStatus && !referralCodeStatus.valid) {
-            setError(referralCodeStatus.error || "Code de parrainage invalide");
+            setError(referralCodeStatus.error || "Code promo invalide");
             return;
         }
 
@@ -258,20 +258,20 @@ export default function EmailSignup() {
                         </div>
                     </div>
 
-                    {/* Referral Code */}
+                    {/* Code promo */}
                     <div className="pt-2">
                         {showReferralCode ? (
                             <div className="space-y-1.5 animate-in slide-in-from-top-1 duration-200">
                                 <div className="flex justify-between items-center ml-3">
                                     <label className="text-xs font-bold text-white tracking-wide">
-                                        CODE PARRAINAGE
+                                        CODE PROMO
                                     </label>
                                     <button type="button" onClick={() => setShowReferralCode(false)} className="text-white/60 hover:text-white transition-colors text-xs font-medium">Masquer</button>
                                 </div>
                                 <div className="relative">
                                     <input
                                         type="text"
-                                        placeholder="CODE123"
+                                        placeholder="CODE"
                                         className={`w-full bg-white/10 border rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none transition-all uppercase tracking-widest font-mono font-medium ${referralCodeStatus?.valid
                                             ? "border-green-400 focus:border-green-400 text-green-300 bg-green-900/20"
                                             : referralCodeStatus?.valid === false
@@ -286,9 +286,9 @@ export default function EmailSignup() {
                                         <Gift className="w-5 h-5 text-green-400 absolute right-4 top-1/2 -translate-y-1/2 drop-shadow-glow" />
                                     )}
                                 </div>
-                                {referralCodeStatus?.valid && referralCodeStatus.referrerName && (
+                                {referralCodeStatus?.valid && (
                                     <p className="text-xs text-green-300 mt-1 ml-3 flex items-center gap-1 font-medium">
-                                        ✓ Parrain : <span className="font-bold text-white">{referralCodeStatus.referrerName}</span>
+                                        ✓ <span className="font-bold text-white">1 mois de Premium offert</span> 🎉
                                     </p>
                                 )}
                                 {referralCodeStatus?.valid === false && (
@@ -302,7 +302,7 @@ export default function EmailSignup() {
                                 className="text-xs text-white/70 hover:text-white transition-colors flex items-center gap-2 ml-1 p-2 rounded-lg hover:bg-white/5 active:scale-95 duration-200 font-medium"
                             >
                                 <Gift className="w-4 h-4 text-white" />
-                                J'ai un code de parrainage
+                                J'ai un code promo
                             </button>
                         )}
                     </div>

@@ -134,7 +134,8 @@ export async function POST(req: Request) {
     revalidatePath("/player/onboarding");
     revalidatePath("/(protected)/home", "page");
 
-    // Traiter le code de parrainage si présent dans les métadonnées (venant du signup)
+    // Traiter le code promo si présent dans les métadonnées (venant du signup)
+    // Seul "CLUB" est accepté → 1 mois de Premium gratuit octroyé automatiquement
     const metadataReferralCode = user.user_metadata?.referral_code;
     if (metadataReferralCode) {
       try {

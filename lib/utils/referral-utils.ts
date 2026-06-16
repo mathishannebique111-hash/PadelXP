@@ -14,7 +14,13 @@ const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   })
   : null;
 
-const PREMIUM_DAYS_PER_REFERRAL = 15;
+/**
+ * Code promo unique accepté à l'inscription.
+ * Le saisir octroie automatiquement 1 mois de Premium gratuit, sans paiement.
+ */
+export const CLUB_PROMO_CODE = "CLUB";
+const CLUB_PREMIUM_DAYS = 30;
+const CLUB_PAYMENT_METHOD = "club_promo";
 
 /**
  * Génère un code de parrainage unique de 6 caractères
@@ -47,66 +53,28 @@ export async function generateUniqueReferralCode(): Promise<string> {
 }
 
 /**
- * Vérifie si un code de parrainage existe et est valide
+ * Vérifie le code promo saisi à l'inscription.
+ * Seul le code "CLUB" est accepté : il offre 1 mois de Premium gratuit.
  */
 export async function validateReferralCode(code: string): Promise<{
   valid: boolean;
-  referrerId?: string;
-  referrerName?: string;
   error?: string;
 }> {
-  if (!supabaseAdmin) {
-    return {
-      valid: false,
-      error: "Service non disponible",
-    };
-  }
-
   if (!code || code.trim().length === 0) {
     return {
       valid: false,
-      error: "Code de parrainage requis",
+      error: "Code requis",
     };
   }
 
-  try {
-    const normalizedCode = code.trim().toUpperCase();
-
-    const { data: profile, error } = await supabaseAdmin
-      .from("profiles")
-      .select("id, display_name, referral_count")
-      .eq("referral_code", normalizedCode)
-      .maybeSingle();
-
-    if (error) {
-      logger.error(`[referral-utils] Error validating referral code for ${normalizedCode.substring(0, 5)}…: ${error.message}`);
-      return {
-        valid: false,
-        error: "Erreur lors de la validation du code",
-      };
-    }
-
-    if (!profile) {
-      return {
-        valid: false,
-        error: "Code de parrainage invalide",
-      };
-    }
-
-
-
-    return {
-      valid: true,
-      referrerId: profile.id,
-      referrerName: profile.display_name || "Joueur",
-    };
-  } catch (error) {
-    logger.error(`[referral-utils] Exception validating referral code: ${error instanceof Error ? error.message : String(error)}`);
+  if (code.trim().toUpperCase() !== CLUB_PROMO_CODE) {
     return {
       valid: false,
-      error: "Erreur lors de la validation du code",
+      error: "Code invalide",
     };
   }
+
+  return { valid: true };
 }
 
 /**
@@ -162,23 +130,30 @@ export async function isSelfReferral(userId: string, referralCode: string): Prom
 }
 
 /**
- * Accorde 15 jours de premium à un joueur (cumule si déjà premium)
+ * Octroie 1 mois (30 jours) de Premium gratuit à un joueur via le code promo CLUB.
+ * Idempotent : si le compte a déjà bénéficié du code CLUB, rien n'est ré-octroyé.
+ * On marque la source via payment_method pour que le cron d'expiration retire le
+ * Premium au bout d'un mois (contrairement aux abonnements Stripe qui sont ignorés).
  */
-async function grantPremiumDays(userId: string, days: number = 15): Promise<{ success: boolean; error?: string }> {
+async function grantClubPremium(userId: string): Promise<{ success: boolean; error?: string }> {
   if (!supabaseAdmin) return { success: false, error: "Service non disponible" };
 
   try {
-    // Fetch current premium_until
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("premium_until, is_premium")
+      .select("premium_until, payment_method")
       .eq("id", userId)
       .maybeSingle();
+
+    // Idempotence : le code CLUB n'est utilisable qu'une seule fois par compte
+    if (profile?.payment_method === CLUB_PAYMENT_METHOD) {
+      return { success: true };
+    }
 
     const now = new Date();
     let startFrom = now;
 
-    // If user already has active premium, extend from their current end date
+    // Si l'utilisateur a déjà du Premium actif, on prolonge depuis sa date de fin
     if (profile?.premium_until) {
       const currentEnd = new Date(profile.premium_until);
       if (currentEnd > now) {
@@ -187,39 +162,40 @@ async function grantPremiumDays(userId: string, days: number = 15): Promise<{ su
     }
 
     const newEnd = new Date(startFrom);
-    newEnd.setDate(newEnd.getDate() + days);
+    newEnd.setDate(newEnd.getDate() + CLUB_PREMIUM_DAYS);
 
     const { error } = await supabaseAdmin
       .from("profiles")
       .update({
         is_premium: true,
         premium_until: newEnd.toISOString(),
+        premium_since: now.toISOString(),
+        payment_method: CLUB_PAYMENT_METHOD,
       })
       .eq("id", userId);
 
     if (error) {
-      logger.error(`[referral-utils] Error granting premium to ${userId.substring(0, 8)}…: ${error.message}`);
+      logger.error(`[referral-utils] Error granting CLUB premium to ${userId.substring(0, 8)}…: ${error.message}`);
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (error) {
-    logger.error(`[referral-utils] Exception granting premium to ${userId.substring(0, 8)}…: ${error instanceof Error ? error.message : String(error)}`);
+    logger.error(`[referral-utils] Exception granting CLUB premium to ${userId.substring(0, 8)}…: ${error instanceof Error ? error.message : String(error)}`);
     return { success: false, error: "Erreur inconnue" };
   }
 }
 
 /**
- * Traite un code de parrainage lors de l'inscription d'un nouveau joueur
- * Crée la relation parrain/filleul et attribue 15 jours de premium aux deux joueurs
+ * Traite le code promo saisi à l'inscription d'un nouveau joueur.
+ * Seul le code "CLUB" est accepté : il octroie automatiquement 1 mois de
+ * Premium gratuit au joueur, sans paiement ni action supplémentaire.
  */
 export async function processReferralCode(
   referralCode: string,
   referredUserId: string
 ): Promise<{
   success: boolean;
-  referrerId?: string;
-  referrerName?: string;
   error?: string;
 }> {
   if (!supabaseAdmin) {
@@ -230,119 +206,26 @@ export async function processReferralCode(
   }
 
   try {
-    // Normaliser le code
-    const normalizedCode = referralCode.trim().toUpperCase();
+    const normalizedCode = (referralCode || "").trim().toUpperCase();
 
-    // 1. Valider le code
-    const validation = await validateReferralCode(normalizedCode);
-    if (!validation.valid || !validation.referrerId) {
+    if (normalizedCode !== CLUB_PROMO_CODE) {
       return {
         success: false,
-        error: validation.error || "Code de parrainage invalide",
+        error: "Code invalide",
       };
     }
 
-    const referrerId = validation.referrerId;
-    const referrerName = validation.referrerName || "Joueur";
-
-    // 2. Vérifier que l'utilisateur n'a pas déjà utilisé un code
-    const alreadyUsed = await hasUserUsedReferralCode(referredUserId);
-    if (alreadyUsed) {
+    const granted = await grantClubPremium(referredUserId);
+    if (!granted.success) {
       return {
         success: false,
-        error: "Vous avez déjà utilisé un code de parrainage",
+        error: granted.error || "Erreur lors de l'attribution du Premium",
       };
     }
 
-    // 3. Vérifier l'auto-parrainage
-    const isSelf = await isSelfReferral(referredUserId, normalizedCode);
-    if (isSelf) {
-      return {
-        success: false,
-        error: "Vous ne pouvez pas utiliser votre propre code de parrainage",
-      };
-    }
-
-    // 4. Récupérer le compteur actuel
-    const { data: referrerProfile } = await supabaseAdmin
-      .from("profiles")
-      .select("referral_count")
-      .eq("id", referrerId)
-      .maybeSingle();
-
-    // 4.b Vérifier la limite de 2 parrainages
-    if ((referrerProfile?.referral_count || 0) >= 2) {
-      return {
-        success: false,
-        error: "Ce parrain a déjà atteint sa limite de parrainages (2 maximum)",
-      };
-    }
-
-    // 5. Créer la relation de parrainage
-    const { data: referral, error: referralError } = await supabaseAdmin
-      .from("referrals")
-      .insert({
-        referrer_id: referrerId,
-        referred_id: referredUserId,
-        referral_code_used: normalizedCode,
-        referrer_premium_awarded: false,
-        referred_premium_awarded: false,
-      })
-      .select("id")
-      .single();
-
-    if (referralError || !referral) {
-      // Vérifier si c'est une violation d'unicité (déjà utilisé)
-      if (referralError?.code === "23505") {
-        return {
-          success: false,
-          error: "Vous avez déjà utilisé un code de parrainage",
-        };
-      }
-      logger.error(`[referral-utils] Error creating referral (referrer: ${referrerId.substring(0, 8)}…, referred: ${referredUserId.substring(0, 8)}…): ${referralError.message}`);
-      return {
-        success: false,
-        error: "Erreur lors de l'enregistrement du parrainage",
-      };
-    }
-
-    // 6. Incrémenter le compteur de parrainages du parrain
-    const newCount = (referrerProfile?.referral_count || 0) + 1;
-    const { error: updateError } = await supabaseAdmin
-      .from("profiles")
-      .update({ referral_count: newCount })
-      .eq("id", referrerId);
-
-    if (updateError) {
-      logger.error(`[referral-utils] Error updating referral count for ${referrerId.substring(0, 8)}…: ${updateError.message}`);
-    }
-
-    // 7. Attribuer 15 jours de premium aux deux joueurs
-    const [referrerPremium, referredPremium] = await Promise.all([
-      grantPremiumDays(referrerId, 15),
-      grantPremiumDays(referredUserId, 15),
-    ]);
-
-    // 8. Marquer les récompenses comme attribuées
-    await supabaseAdmin
-      .from("referrals")
-      .update({
-        referrer_premium_awarded: referrerPremium.success,
-        referred_premium_awarded: referredPremium.success,
-      })
-      .eq("id", referral.id);
-
-    if (!referrerPremium.success || !referredPremium.success) {
-      logger.error(`[referral-utils] Error awarding premium (referrer: ${referrerId.substring(0, 8)}…, referred: ${referredUserId.substring(0, 8)}…): ${referrerPremium.error || referredPremium.error}`);
-    }
-
-    return {
-      success: true,
-      referrerId,
-      referrerName,
-    };
+    return { success: true };
   } catch (error) {
-    logger.error(`[referral-utils] Exception processing referral code for ${referredUserId.substring(0, 8)}…: ${error instanceof Error ? error.message : String(error)}`);
+    logger.error(`[referral-utils] Exception processing promo code for ${referredUserId.substring(0, 8)}…: ${error instanceof Error ? error.message : String(error)}`);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur inconnue",

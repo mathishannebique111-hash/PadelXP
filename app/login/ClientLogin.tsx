@@ -238,10 +238,10 @@ export default function ClientLogin() {
         return;
       }
 
-      // Vérifier le code de parrainage si fourni
+      // Vérifier le code promo si fourni
       if (referralCode.trim().length > 0) {
         if (!referralCodeStatus || !referralCodeStatus.valid) {
-          setError(referralCodeStatus?.error || "Code de parrainage invalide");
+          setError(referralCodeStatus?.error || "Code promo invalide");
           setLoading(false);
           return;
         }
@@ -577,15 +577,15 @@ export default function ClientLogin() {
             </div>
           </div>
 
-          {/* Code de parrainage - Caché par défaut */}
+          {/* Code promo - Caché par défaut */}
           {showReferralCode && (
             <div className="space-y-2 transition-all duration-300 animate-fadeIn">
               <label className="block text-[10px] text-white/70 mb-0.5">
-                Code de parrainage (optionnel)
+                Code promo (optionnel)
               </label>
               <input
                 type="text"
-                placeholder="Code de parrainage"
+                placeholder="Code promo"
                 className={`w-full rounded-lg bg-white/5 border px-2.5 py-1.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 ${referralCodeStatus?.valid
                   ? "border-green-500/50 focus:ring-green-500"
                   : referralCodeStatus?.valid === false
@@ -599,9 +599,9 @@ export default function ClientLogin() {
               {referralCodeValidating && (
                 <p className="text-xs text-white/60">Vérification du code...</p>
               )}
-              {referralCodeStatus?.valid && referralCodeStatus.referrerName && (
+              {referralCodeStatus?.valid && (
                 <p className="text-xs text-green-400">
-                  ✓ Code valide ! Parrain : {referralCodeStatus.referrerName}
+                  ✓ 1 mois de Premium offert 🎉
                 </p>
               )}
               {referralCodeStatus?.valid === false && referralCodeStatus.error && (
@@ -616,7 +616,7 @@ export default function ClientLogin() {
               onClick={() => setShowReferralCode(true)}
               className="text-xs text-white/70 hover:text-white underline transition-colors"
             >
-              J'ai un code de parrainage
+              J'ai un code promo
             </button>
           )}
 
